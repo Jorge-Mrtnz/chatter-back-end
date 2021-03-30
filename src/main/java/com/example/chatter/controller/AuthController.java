@@ -1,14 +1,9 @@
-package com.example.auth.controller;
+package com.example.chatter.controller;
 
-import org.springframework.web.bind.annotation.RestController;
-
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.JwtException;
-
-import com.example.auth.config.JwtUtil;
-import com.example.auth.model.AuthRequest;
-import com.example.auth.model.AuthResponse;
+import com.example.chatter.config.JwtUtil;
+import com.example.chatter.model.AuthRequest;
+import com.example.chatter.model.AuthResponse;
+import com.example.chatter.service.UserService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,13 +18,19 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.JwtException;
 
+@CrossOrigin
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -41,6 +42,9 @@ public class AuthController {
     private JdbcUserDetailsManager userDetailsManager;
 
     @Autowired
+    private UserService userService;
+
+    @Autowired
     private JwtUtil jwtUtil;
 
     @Autowired
@@ -49,13 +53,11 @@ public class AuthController {
     @Autowired
     private JavaMailSender mailSender;
 
-    @PostMapping("login") 
-    public ResponseEntity<?> login(@RequestBody AuthRequest req){
+    @PostMapping("login")
+    public ResponseEntity<?> login(@RequestBody AuthRequest req) {
         try {
-            authManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword())
-            );
-        }catch(BadCredentialsException e){
+            authManager.authenticate(new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword()));
+        } catch (BadCredentialsException e) {
             throw new BadCredentialsException("Incorrect username or password");
         }
 
@@ -65,51 +67,45 @@ public class AuthController {
     }
 
     @PostMapping("register")
-    public ResponseEntity<?> register(@RequestBody AuthRequest req){
+    public ResponseEntity<?> register(@RequestBody AuthRequest req) {
 
-        if(userDetailsManager.userExists(req.getUsername())){
+        if (userDetailsManager.userExists(req.getUsername())) {
             return new ResponseEntity<String>("User already exists.", HttpStatus.BAD_REQUEST);
         }
 
-        UserDetails user = User.builder()
-            .username(req.getUsername())
-            .password(passEncoder.encode("pass"))
-            .authorities("ROLE_user")
-            .disabled(true)
-            .build();
+        // userService.createUser(req);
+
+        UserDetails user = User.builder().username(req.getUsername()).password(passEncoder.encode(req.getPassword()))
+                .authorities("ROLE_user").disabled(true).build();
         userDetailsManager.createUser(user);
 
         SimpleMailMessage mail = new SimpleMailMessage();
         mail.setTo(req.getUsername());
         mail.setSubject("Email Confirmation");
         mail.setText("http://localhost:8080/auth/confirmEmail?token=" + jwtUtil.createToken(user));
- 
+
         mailSender.send(mail);
 
         return ResponseEntity.ok("Ok");
     }
 
     @GetMapping("confirmEmail")
-    public ResponseEntity<?> confirmEmail(@RequestParam String token){
+    public ResponseEntity<?> confirmEmail(@RequestParam String token) {
         UserDetails disabledUser;
         UserDetails enabledUser;
         Jws<Claims> jwt;
-        try{
-             jwt = jwtUtil.decodeToken(token);
-        } catch (JwtException e){
+        try {
+            jwt = jwtUtil.decodeToken(token);
+        } catch (JwtException e) {
             return new ResponseEntity<String>("Invalid token", HttpStatus.BAD_REQUEST);
         }
-        try{
+        try {
             disabledUser = userDetailsManager.loadUserByUsername(jwt.getBody().getSubject());
-        }catch (UsernameNotFoundException e){
+        } catch (UsernameNotFoundException e) {
             return new ResponseEntity<String>("Invalid user", HttpStatus.BAD_REQUEST);
         }
-        enabledUser = User.builder()
-            .username(disabledUser.getUsername())
-            .password(disabledUser.getPassword())
-            .authorities(disabledUser.getAuthorities())
-            .disabled(false)
-            .build();
+        enabledUser = User.builder().username(disabledUser.getUsername()).password(disabledUser.getPassword())
+                .authorities(disabledUser.getAuthorities()).disabled(false).build();
         userDetailsManager.updateUser(enabledUser);
         return ResponseEntity.ok("Ok");
     }

@@ -1,4 +1,4 @@
-package com.example.auth.config;
+package com.example.chatter.config;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;

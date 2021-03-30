@@ -1,4 +1,4 @@
-package com.example.auth.controller;
+package com.example.chatter.controller;
 
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;

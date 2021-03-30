@@ -1,4 +1,4 @@
-package com.example.auth.config;
+package com.example.chatter.config;
 
 import java.util.Date;
 
