@@ -73,14 +73,14 @@ public class AuthController {
             return new ResponseEntity<String>("User already exists.", HttpStatus.BAD_REQUEST);
         }
 
-        // userService.createUser(req);
+        userService.createUser(req);
 
         UserDetails user = User.builder().username(req.getUsername()).password(passEncoder.encode(req.getPassword()))
                 .authorities("ROLE_user").disabled(true).build();
         userDetailsManager.createUser(user);
 
         SimpleMailMessage mail = new SimpleMailMessage();
-        mail.setTo(req.getUsername());
+        mail.setTo(req.getEmail());
         mail.setSubject("Email Confirmation");
         mail.setText("http://localhost:8080/auth/confirmEmail?token=" + jwtUtil.createToken(user));
 

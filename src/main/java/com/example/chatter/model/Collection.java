@@ -21,7 +21,9 @@ import lombok.Data;
 public class Collection {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
+    private String name;
+
     @CreationTimestamp
     @Column(name = "date_created")
     private Date dateCreated;
@@ -30,6 +32,6 @@ public class Collection {
     private List<Post> posts;
 
     @ManyToOne
-    @JoinColumn(name = "owner")
+    @JoinColumn(name = "owner_id")
     private User owner;
 }

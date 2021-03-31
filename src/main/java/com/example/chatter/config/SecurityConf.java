@@ -50,6 +50,8 @@ public class SecurityConf extends WebSecurityConfigurerAdapter{
             .authorizeRequests()
                 .antMatchers("/admin").hasRole("admin")
                 .antMatchers("/user").authenticated()
+                .antMatchers("/post").authenticated()
+                .antMatchers("/collection").authenticated()
                 .antMatchers("/**").permitAll().and()
             .exceptionHandling()
                 .authenticationEntryPoint(
