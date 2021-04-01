@@ -3,7 +3,7 @@ package com.example.chatter.controller;
 import java.security.Principal;
 
 import com.example.chatter.dto.CollectionDTO;
-import com.example.chatter.model.Post;
+import com.example.chatter.model.Chat;
 import com.example.chatter.service.PostService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +18,7 @@ public class PostController {
     private PostService postService;
 
     @PostMapping("/post/create")
-    public void post(@RequestBody Post p, Principal principal){
+    public void post(@RequestBody Chat p, Principal principal){
         postService.createPost(p);
     }
 

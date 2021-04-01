@@ -1,6 +1,7 @@
 package com.example.chatter.model;
 
 import java.util.Date;
+import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -9,6 +10,8 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.validation.constraints.NotBlank;
 
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -16,20 +19,24 @@ import lombok.Data;
 
 @Data
 @Entity
-public class Post {
+public class Conversation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
-    private String file;
+    private Long id;
+
+    @NotBlank
+    private String name;
+
+    private String image;
+
     @CreationTimestamp
     @Column(name = "date_created")
     private Date dateCreated;
 
-    @ManyToOne
-    @JoinColumn(name = "collection")
-    private Collection collection;
+    @OneToMany(mappedBy = "collection")
+    private List<Chat> posts;
 
     @ManyToOne
-    @JoinColumn(name = "creator")
-    private User creator;
+    @JoinColumn(name = "owner_id")
+    private User owner;
 }

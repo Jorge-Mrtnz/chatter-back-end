@@ -1,7 +1,6 @@
 package com.example.chatter.model;
 
 import java.util.Date;
-import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -10,7 +9,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -18,20 +16,20 @@ import lombok.Data;
 
 @Data
 @Entity
-public class Collection {
+public class Chat {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private String name;
-
+    private long id;
+    private String file;
     @CreationTimestamp
     @Column(name = "date_created")
     private Date dateCreated;
 
-    @OneToMany(mappedBy = "collection")
-    private List<Post> posts;
+    @ManyToOne
+    @JoinColumn(name = "collection")
+    private Conversation collection;
 
     @ManyToOne
-    @JoinColumn(name = "owner_id")
-    private User owner;
+    @JoinColumn(name = "creator")
+    private User creator;
 }

@@ -2,8 +2,8 @@ package com.example.chatter.service;
 
 import javax.transaction.Transactional;
 
-import com.example.chatter.model.AuthRequest;
 import com.example.chatter.model.User;
+import com.example.chatter.payload.AuthRequest;
 import com.example.chatter.repository.UserRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;

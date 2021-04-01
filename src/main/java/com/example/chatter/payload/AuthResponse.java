@@ -1,4 +1,4 @@
-package com.example.chatter.model;
+package com.example.chatter.payload;
 
 import lombok.Data;
 

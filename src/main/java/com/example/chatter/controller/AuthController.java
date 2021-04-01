@@ -1,9 +1,13 @@
 package com.example.chatter.controller;
 
-import com.example.chatter.config.JwtUtil;
-import com.example.chatter.model.AuthRequest;
-import com.example.chatter.model.AuthResponse;
-import com.example.chatter.service.UserService;
+import javax.validation.Valid;
+
+import com.example.chatter.model.User;
+import com.example.chatter.payload.AuthRequest;
+import com.example.chatter.payload.AuthResponse;
+import com.example.chatter.repository.UserRepository;
+import com.example.chatter.security.jwt.JwtUtil;
+import com.example.chatter.security.services.UserDetailsServiceImpl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,11 +17,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,10 +40,10 @@ public class AuthController {
     private AuthenticationManager authManager;
 
     @Autowired
-    private JdbcUserDetailsManager userDetailsManager;
+    private UserDetailsServiceImpl userService;
 
     @Autowired
-    private UserService userService;
+    private UserRepository userRepository;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -54,60 +55,66 @@ public class AuthController {
     private JavaMailSender mailSender;
 
     @PostMapping("login")
-    public ResponseEntity<?> login(@RequestBody AuthRequest req) {
+    public ResponseEntity<?> login(@Valid @RequestBody AuthRequest req) {
         try {
             authManager.authenticate(new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword()));
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException("Incorrect username or password");
         }
 
-        final UserDetails user = userDetailsManager.loadUserByUsername(req.getUsername());
+        final UserDetails user = userService.loadUserByUsername(req.getUsername());
 
-        return ResponseEntity.ok(new AuthResponse(jwtUtil.createToken(user)));
+        return ResponseEntity.ok(new AuthResponse(jwtUtil.createToken(user.getUsername())));
     }
 
     @PostMapping("register")
     public ResponseEntity<?> register(@RequestBody AuthRequest req) {
 
-        if (userDetailsManager.userExists(req.getUsername())) {
-            return new ResponseEntity<String>("User already exists.", HttpStatus.BAD_REQUEST);
+        if (userRepository.existsByUsername(req.getUsername())) {
+            return new ResponseEntity<String>("Username is already taken", HttpStatus.BAD_REQUEST);
         }
 
-        userService.createUser(req);
+        if(userRepository.existsByEmail(req.getEmail())){
+            return new ResponseEntity<String>("Email is already taken", HttpStatus.BAD_REQUEST);
+        }
 
-        UserDetails user = User.builder().username(req.getUsername()).password(passEncoder.encode(req.getPassword()))
-                .authorities("ROLE_user").disabled(true).build();
-        userDetailsManager.createUser(user);
+        User user = userService.createUser(
+            req.getEmail(),
+            req.getUsername(),
+            passEncoder.encode(req.getPassword()),
+            // false
+            true
+        );
 
-        SimpleMailMessage mail = new SimpleMailMessage();
-        mail.setTo(req.getEmail());
-        mail.setSubject("Email Confirmation");
-        mail.setText("http://localhost:8080/auth/confirmEmail?token=" + jwtUtil.createToken(user));
+        userService.saveUser(user);
 
-        mailSender.send(mail);
+        // SimpleMailMessage mail = new SimpleMailMessage();
+        // mail.setTo(req.getEmail());
+        // mail.setSubject("Email Confirmation");
+        // mail.setText("http://localhost:8080/auth/confirmEmail?token=" + jwtUtil.createToken(user.getUsername()));
 
-        return ResponseEntity.ok("Ok");
+        // mailSender.send(mail);
+
+        // return ResponseEntity.ok("Confirmation Email Sent");
+        return ResponseEntity.ok("Registration Successful");
     }
 
     @GetMapping("confirmEmail")
     public ResponseEntity<?> confirmEmail(@RequestParam String token) {
-        UserDetails disabledUser;
-        UserDetails enabledUser;
+        User user;
         Jws<Claims> jwt;
         try {
             jwt = jwtUtil.decodeToken(token);
         } catch (JwtException e) {
             return new ResponseEntity<String>("Invalid token", HttpStatus.BAD_REQUEST);
         }
-        try {
-            disabledUser = userDetailsManager.loadUserByUsername(jwt.getBody().getSubject());
-        } catch (UsernameNotFoundException e) {
-            return new ResponseEntity<String>("Invalid user", HttpStatus.BAD_REQUEST);
-        }
-        enabledUser = User.builder().username(disabledUser.getUsername()).password(disabledUser.getPassword())
-                .authorities(disabledUser.getAuthorities()).disabled(false).build();
-        userDetailsManager.updateUser(enabledUser);
-        return ResponseEntity.ok("Ok");
+
+        user = userService.getUser(jwt.getBody().getSubject());
+
+        user.setEnabled(true);
+        userService.saveUser(user);
+
+        return ResponseEntity.ok("Email Successfully Validated");
     }
 
 }

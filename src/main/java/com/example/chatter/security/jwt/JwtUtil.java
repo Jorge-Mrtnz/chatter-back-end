@@ -1,11 +1,10 @@
-package com.example.chatter.config;
+package com.example.chatter.security.jwt;
 
 import java.util.Date;
 
 import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Claims;
@@ -17,17 +16,17 @@ import io.jsonwebtoken.security.Keys;
 @Component
 public class JwtUtil{
 
-	public static final long JWT_TOKEN_VALIDITY = 1 * 60 * 1000;
-
     @Value("${jwt.secret}")
     private String secret;
+    @Value("${jwt.ExpirationM}")
+    private int expirationM;
 
-    public String createToken(UserDetails userDetails){
+    public String createToken(String subject){
         SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
         return Jwts.builder()
             .setIssuedAt(new Date(System.currentTimeMillis()))
-            .setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY))
-            .setSubject(userDetails.getUsername())
+            .setExpiration(new Date(System.currentTimeMillis() + expirationM * 60 * 1000))
+            .setSubject(subject)
             .signWith(key)
             .compact();
     }
