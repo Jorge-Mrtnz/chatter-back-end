@@ -1,10 +1,13 @@
 package com.example.chatter.controller;
 
+import java.util.stream.Collectors;
+
 import javax.validation.Valid;
 
 import com.example.chatter.model.User;
 import com.example.chatter.payload.AuthRequest;
 import com.example.chatter.payload.AuthResponse;
+import com.example.chatter.payload.Message;
 import com.example.chatter.repository.UserRepository;
 import com.example.chatter.security.jwt.JwtUtil;
 import com.example.chatter.security.services.UserDetailsServiceImpl;
@@ -56,15 +59,27 @@ public class AuthController {
 
     @PostMapping("login")
     public ResponseEntity<?> login(@Valid @RequestBody AuthRequest req) {
+        System.out.println(req);
         try {
             authManager.authenticate(new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword()));
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException("Incorrect username or password");
         }
 
-        final UserDetails user = userService.loadUserByUsername(req.getUsername());
+        final User user = userService.getUser(req.getUsername());
+        String jwtToken = jwtUtil.createToken(req.getUsername());
 
-        return ResponseEntity.ok(new AuthResponse(jwtUtil.createToken(user.getUsername())));
+        AuthResponse res = new AuthResponse();
+        res.setId(user.getId());
+        res.setUsername(user.getUsername());
+        res.setEmail(user.getEmail());
+        res.setToken(jwtToken);
+        res.setRoles(user.getRoles().stream()
+            .map(i -> i.getName().toString())
+            .collect(Collectors.toList()));
+
+        System.out.println(user.getUsername() + " successfully logged in");
+        return ResponseEntity.ok(res);
     }
 
     @PostMapping("register")
@@ -96,7 +111,7 @@ public class AuthController {
         // mailSender.send(mail);
 
         // return ResponseEntity.ok("Confirmation Email Sent");
-        return ResponseEntity.ok("Registration Successful");
+        return ResponseEntity.ok(new Message("Registration Successful"));
     }
 
     @GetMapping("confirmEmail")
@@ -114,7 +129,7 @@ public class AuthController {
         user.setEnabled(true);
         userService.saveUser(user);
 
-        return ResponseEntity.ok("Email Successfully Validated");
+        return ResponseEntity.ok(new Message("Email Successfully Verified"));
     }
 
 }

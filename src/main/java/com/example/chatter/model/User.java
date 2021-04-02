@@ -16,6 +16,10 @@ import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+
 import lombok.Data;
 
 @Data
@@ -24,6 +28,8 @@ import lombok.Data;
     @UniqueConstraint(columnNames = "username"),
     @UniqueConstraint(columnNames = "email")
 })
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class,
+    property = "username")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,6 +43,7 @@ public class User {
     private String email;
 
     @NotBlank
+    @JsonIgnore
     private String password;
 
     private Boolean enabled;
@@ -47,10 +54,13 @@ public class User {
         inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles;
 
+    @ManyToMany(mappedBy = "members")
+    private Set<Conversation> memberedConversations;
+
     @OneToMany(mappedBy = "creator")
-    private List<Chat> posts;
+    private List<Chat> chats;
 
     @OneToMany(mappedBy = "owner")
-    private List<Conversation> collections;
+    private List<Conversation> ownedConversations;
 
 }
