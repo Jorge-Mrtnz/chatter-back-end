@@ -2,13 +2,13 @@ package com.example.chatter.service;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 
 import com.example.chatter.model.Chat;
 import com.example.chatter.model.Conversation;
 import com.example.chatter.model.User;
-import com.example.chatter.payload.ChatDTO;
 import com.example.chatter.repository.ConversationRepository;
 import com.example.chatter.repository.ChatRepository;
 import com.example.chatter.repository.UserRepository;
@@ -31,13 +31,9 @@ public class PostService {
     UserRepository userRepository;
     
     @Transactional
-    public void createChat(ChatDTO chatDTO, Principal principal){
-        Chat chat = new Chat();
+    public void createChat(Chat chat, Principal principal){
         User user = userRepository.findByUsername(principal.getName()).orElseThrow(() -> new UsernameNotFoundException("user not found"));
-        Conversation conv = convRepository.findById(chatDTO.getConversationId()).orElseThrow();
         chat.setCreator(user);
-        chat.setConversation(conv);
-        chat.setFile(chatDTO.getFile());
         chatRepository.save(chat);
     }
 
@@ -62,4 +58,29 @@ public class PostService {
     public Chat findChatById(long id){
         return chatRepository.findById(id).orElseThrow(() -> new RuntimeException("chat not found"));
     }
+
+    @Transactional
+    public List<Conversation> findAllConversations(){
+        return convRepository.findAll();
+    }
+
+    @Transactional
+    public String followConversation(long id, Principal principal){
+        Conversation conv = convRepository.findById(id).orElseThrow();
+        User user = userRepository.findByUsername(principal.getName()).orElseThrow();
+        if(conv.getFollowers().add(user)){
+            user.getFollowedConversations().add(conv);
+            convRepository.save(conv);
+            userRepository.save(user);
+            return "Conversation followed successfully";
+        }
+        return "Already following conversation";
+    }
+
+    @Transactional
+    public List<Conversation> getFollowdConversations(Principal principal){
+        User user = userRepository.findByUsername(principal.getName()).orElseThrow();
+        return user.getFollowedConversations().stream().collect(Collectors.toList());
+    }
+
 }

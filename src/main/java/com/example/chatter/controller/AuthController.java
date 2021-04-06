@@ -59,7 +59,6 @@ public class AuthController {
 
     @PostMapping("login")
     public ResponseEntity<?> login(@Valid @RequestBody AuthRequest req) {
-        System.out.println(req);
         try {
             authManager.authenticate(new UsernamePasswordAuthenticationToken(req.getUsername(), req.getPassword()));
         } catch (BadCredentialsException e) {
@@ -78,12 +77,11 @@ public class AuthController {
             .map(i -> i.getName().toString())
             .collect(Collectors.toList()));
 
-        System.out.println(user.getUsername() + " successfully logged in");
         return ResponseEntity.ok(res);
     }
 
     @PostMapping("register")
-    public ResponseEntity<?> register(@RequestBody AuthRequest req) {
+    public ResponseEntity<?> register(@Valid @RequestBody AuthRequest req) {
 
         if (userRepository.existsByUsername(req.getUsername())) {
             return new ResponseEntity<String>("Username is already taken", HttpStatus.BAD_REQUEST);
