@@ -31,8 +31,13 @@ public class UserController {
         return ResponseEntity.ok(new Message("Follow succesfull"));
     }
 
+    @GetMapping("getFollowers")
+    public ResponseEntity<?> getFollowers(Principal principal){
+        return ResponseEntity.ok(userService.getFollowers(principal));
+    }
+
     @GetMapping("getFollowing")
     public ResponseEntity<?> getFollowing(Principal principal){
-        return ResponseEntity.ok(userService.getFollowers(principal));
+        return ResponseEntity.ok(userService.getFollowing(principal));
     }
 }

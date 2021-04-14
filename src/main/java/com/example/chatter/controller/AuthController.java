@@ -95,21 +95,21 @@ public class AuthController {
             req.getEmail(),
             req.getUsername(),
             passEncoder.encode(req.getPassword()),
-            // false
-            true
+            false
+            // true
         );
 
         userService.saveUser(user);
 
-        // SimpleMailMessage mail = new SimpleMailMessage();
-        // mail.setTo(req.getEmail());
-        // mail.setSubject("Email Confirmation");
-        // mail.setText("http://localhost:8080/auth/confirmEmail?token=" + jwtUtil.createToken(user.getUsername()));
+        SimpleMailMessage mail = new SimpleMailMessage();
+        mail.setTo(req.getEmail());
+        mail.setSubject("Email Confirmation");
+        mail.setText("http://localhost:8080/auth/confirmEmail?token=" + jwtUtil.createToken(user.getUsername()));
 
-        // mailSender.send(mail);
+        mailSender.send(mail);
 
-        // return ResponseEntity.ok("Confirmation Email Sent");
-        return ResponseEntity.ok(new Message("Registration Successful"));
+        return ResponseEntity.ok("Confirmation Email Sent");
+        // return ResponseEntity.ok(new Message("Registration Successful"));
     }
 
     @GetMapping("confirmEmail")

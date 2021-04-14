@@ -23,13 +23,20 @@ public class UserService {
         User user = userRepository.findByUsername(principal.getName()).orElseThrow();
         User target = userRepository.findByUsername(_target.getUsername()).orElseThrow();
         user.getFollowing().add(target);
-        // target.getFollowers().add(user);
+        target.getFollowers().add(user);
         userRepository.save(user);
+        userRepository.save(target);
     }
 
     @Transactional
     public List<User> getFollowers(Principal principal){
         User user = userRepository.findByUsername(principal.getName()).orElseThrow();
         return user.getFollowers().stream().collect(Collectors.toList());
+    }
+
+    @Transactional
+    public List<User> getFollowing(Principal principal){
+        User user = userRepository.findByUsername(principal.getName()).orElseThrow();
+        return user.getFollowing().stream().collect(Collectors.toList());
     }
 }

@@ -31,10 +31,16 @@ public class PostService {
     UserRepository userRepository;
     
     @Transactional
-    public void createChat(Chat chat, Principal principal){
-        User user = userRepository.findByUsername(principal.getName()).orElseThrow(() -> new UsernameNotFoundException("user not found"));
+    public long createChat(long id, Principal principal){
+        User user = userRepository.findByUsername(principal.getName()).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        Conversation conv = convRepository.findById(id).orElseThrow(() -> new RuntimeException("Conversation not found"));
+        Chat chat = new Chat();
         chat.setCreator(user);
+        chat.setConversation(conv);
         chatRepository.save(chat);
+        chat.setFile("http://localhost:8080/files/audio/" + chat.getId());
+        chatRepository.save(chat);
+        return chat.getId();
     }
 
     @Transactional
@@ -42,6 +48,19 @@ public class PostService {
         User user = userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("user not found"));
         conv.setOwner(user);
         convRepository.save(conv);
+    }
+
+    @Transactional
+    public Long creatConv(String convName, String username, String description){
+        User user = userRepository.findByUsername(username).orElseThrow();
+        Conversation conv = new Conversation();
+        conv.setOwner(user);
+        conv.setName(convName);
+        conv.setDescription(description);
+        convRepository.save(conv);
+        conv.setImage("http://localhost:8080/files/img/conv/" + conv.getId());
+        convRepository.save(conv);
+        return conv.getId();
     }
 
     @Transactional
@@ -81,6 +100,19 @@ public class PostService {
     public List<Conversation> getFollowdConversations(Principal principal){
         User user = userRepository.findByUsername(principal.getName()).orElseThrow();
         return user.getFollowedConversations().stream().collect(Collectors.toList());
+    }
+
+    @Transactional
+    public List<Conversation> getCreatedConversations(String username){
+        User user = userRepository.findByUsername(username).orElseThrow();
+        return user.getOwnedConversations().stream().collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void deleteConversation(long convId){
+        Conversation conv = convRepository.findById(convId).orElseThrow();
+        chatRepository.deleteInBatch(conv.getChats());
+        convRepository.deleteById(convId);
     }
 
 }
