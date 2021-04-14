@@ -20,7 +20,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -96,7 +95,6 @@ public class AuthController {
             req.getUsername(),
             passEncoder.encode(req.getPassword()),
             false
-            // true
         );
 
         userService.saveUser(user);
@@ -109,7 +107,6 @@ public class AuthController {
         mailSender.send(mail);
 
         return ResponseEntity.ok("Confirmation Email Sent");
-        // return ResponseEntity.ok(new Message("Registration Successful"));
     }
 
     @GetMapping("confirmEmail")
